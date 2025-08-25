@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tokenizaciondb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+
+  mailhog:
+    image: mailhog/mailhog
+    ports: ["1025:1025", "8025:8025"]
+
+
+  app:
+    build: src/test/java
+    depends_on: [db, mailhog]
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: tokenizaciondb
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENABLED: "true"
+      MAIL_FROM: noreply@local.test
+      API_KEY: dev-123
+      AES_GCM_KEY_BASE64: REEMPLAZA_CON_BASE64_32B
+      PAYMENT_REJECTION_PROB: "0.3"
+      PAYMENT_MAX_ATTEMPTS: "3"
+    ports: ["8080:8080"]

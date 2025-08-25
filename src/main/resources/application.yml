@@ -1,0 +1,144 @@
+spring:
+  application:
+    name: tokenizacion-app
+
+  # Perfil por defecto
+  profiles:
+    active: dev
+
+  cloud:
+    config:
+      enabled: false
+  config:
+    import: optional:configserver
+
+  # SMTP: credenciales por variables de entorno
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# Correo (flags de negocio)
+mail:
+  from: ${MAIL_FROM:noreply@local.test}
+  enabled: ${MAIL_ENABLED:true}
+
+# Seguridad
+security:
+  api-key: ${API_KEY:dev-123}
+
+# Clave AES-GCM en base64 (16/24/32 bytes). En prod no pongas default.
+crypto:
+  aes-gcm:
+    key-base64: ${AES_GCM_KEY_BASE64:ymI5Oo2g2bXWS4FFW/okZI1bXTtvxSVQGXQVx9VhK+I=}
+
+# Parámetros de pago / reintentos (usados por OrderService)
+payment:
+  rejection-probability: ${PAYMENT_REJECTION_PROB:0.3}
+  max-attempts: ${PAYMENT_MAX_ATTEMPTS:3}
+
+# (Opcional) otras banderas de negocio
+business:
+  min-stock-visible: ${MIN_STOCK_VISIBLE:1}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers
+
+logging:
+  level:
+    org.springframework: INFO
+
+server:
+  port: 8080
+  error:
+    include-message: always
+
+---
+# =========================
+# Profile: Development (H2)
+# =========================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:mem:tokenizaciondb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Para desarrollo: MailHog (http://localhost:8025)
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG
+
+---
+# ==============================
+# Profile: Production (PostgreSQL)
+# ==============================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tokenizaciondb}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # valida el esquema en prod
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+# En prod, expón solo lo necesario
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
