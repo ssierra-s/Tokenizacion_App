@@ -1,6 +1,59 @@
-#### Tokenización App (Spring Boot 3 / Java 21) ###
+# 🛡️ Tokenización App
 
-Este proyecto implementa una API REST de tokenización de tarjetas con AES-GCM, gestión de carritos y órdenes con reintentos de pago, además de envío de correos electrónicos de confirmación/rechazo tras el commit en base de datos.  
+**Versión:** 1.1  
+**Fecha:** 25-ago-2025  
+**Runtime:** Java 21 · Spring Boot 3  
+**Perfiles activos:** `dev` / `prod`  
+
+---
+
+## 📌 Descripción
+
+**Tokenización App** es una **API REST** desarrollada en **Spring Boot** que gestiona operaciones de **tokenización** (tarjetas, entidades, identificadores u otros dominios análogos).  
+
+Incluye:
+- Arquitectura **hexagonal ligera** (puertos/adaptadores).  
+- Persistencia en **PostgreSQL** (con soporte en `dev` para **H2**).  
+- **Contenedorización con Docker** + `docker-compose`.  
+- **Colección Postman** para pruebas E2E y de errores.  
+- Despliegue en plataformas **Render** (prod), Railway, Fly.io y GCP Cloud Run.  
+
+👉 **API ya desplegada en Render:**  
+🔗 [https://tokenizacion.onrender.com](https://tokenizacion.onrender.com)
+
+---
+
+## ⚙️ Tecnologías principales
+
+- Java 21  
+- Spring Boot 3 (Web, Data JPA, Validation, Actuator)  
+- PostgreSQL 16 / H2  
+- Docker & Docker Compose  
+- OpenAPI/Swagger (opcional)  
+- JUnit 5 + Mockito + Testcontainers  
+
+---
+
+## 🏗️ Arquitectura
+
+- **API (Controller):** Endpoints REST, validación, manejo de errores.  
+- **Servicio (Application):** Casos de uso y reglas de negocio.  
+- **Dominio:** Entidades + interfaces (puertos).  
+- **Infraestructura:** Adaptadores (JPA, configuración, clientes externos).  
+
+---
+
+## 🔑 Configuración de Entornos
+
+Variables recomendadas:
+
+SPRING_PROFILES_ACTIVE=dev         # o prod
+SERVER_PORT=8080
+
+# Base de datos
+SPRING_DATASOURCE_URL=jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME
+SPRING_DATASOURCE_USERNAME=$DB_USER
+SPRING_DATASOURCE_PASSWORD=$DB_PASSWORD
 
 La aplicación está pensada para ser flexible en su despliegue y pruebas. Existen varias formas de correrla:
 
