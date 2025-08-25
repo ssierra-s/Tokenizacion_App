@@ -1,0 +1,420 @@
+{
+  "info": {
+    "name": "Tokenizacion App - E2E & Error Tests",
+    "_postman_id": "f3f8a2d7-0000-4a11-aaaa-collection",
+    "description": "Colección para probar la API (éxito y errores). Usa X-API-KEY y guarda variables automáticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Variables default si no existen",
+          "if (!pm.environment.get('runId')) pm.environment.set('runId', Date.now().toString());",
+          "if (!pm.environment.get('randomInt')) pm.environment.set('randomInt', Math.floor(100000 + Math.random()*900000));",
+          "if (!pm.environment.get('email')) pm.environment.set('email', `user_${pm.environment.get('runId')}_${pm.environment.get('randomInt')}@mail.test`);",
+          "if (!pm.environment.get('phone')) pm.environment.set('phone', `+57${pm.environment.get('randomInt')}`);",
+          "if (!pm.environment.get('address')) pm.environment.set('address', 'Calle 123, Bogotá');",
+          "if (!pm.environment.get('searchTerm')) pm.environment.set('searchTerm', 'teclado');",
+          "// Si no hay userId, por defecto 1",
+          "if (!pm.environment.get('userId')) pm.environment.set('userId', '1');"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "apiKey", "value": "dev-123", "type": "string" },
+    { "key": "userId", "value": "1", "type": "string" },
+    { "key": "productId", "value": "", "type": "string" },
+    { "key": "productLowId", "value": "", "type": "string" },
+    { "key": "cardToken", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "lastOrderStatus", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "00) Ping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/ping"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', ()=> pm.response.code === 200);",
+              "pm.test('pong', ()=> pm.response.text().toLowerCase().includes('pong'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01) Productos - Listar (OK)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" }
+        ],
+        "url": "{{baseUrl}}/api/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', ()=> pm.response.code === 200);",
+              "let json=null; try{ json = pm.response.json(); }catch(e){}",
+              "pm.test('respuesta array', ()=> Array.isArray(json));",
+              "if (Array.isArray(json) && json.length>0) {",
+              "  pm.environment.set('productId', json[0].id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01b) Productos - Sin API Key (401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [ "pm.test('401 Unauthorized', ()=> pm.response.code === 401);" ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01c) Productos - API Key inválida (401)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-KEY", "value": "invalida" }
+        ],
+        "url": "{{baseUrl}}/api/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [ "pm.test('401 Unauthorized', ()=> pm.response.code === 401);" ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02) Carrito - Agregar (OK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add?userId={{userId}}&productId={{productId}}&quantity=1",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "cart", "add" ],
+          "query": [
+            { "key": "userId", "value": "{{userId}}" },
+            { "key": "productId", "value": "{{productId}}" },
+            { "key": "quantity", "value": "1" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('productId')) {",
+              "  console.warn('productId vacío; ejecuta primero Productos - Listar.');",
+              "  pm.test('SKIP falta productId', ()=> true);",
+              "} else {",
+              "  pm.test('200 OK', ()=> pm.response.code === 200);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02b) Carrito - Agregar quantity=0 (400 esperado)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/cart/add?userId={{userId}}&productId={{productId}}&quantity=0",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "cart", "add" ],
+          "query": [
+            { "key": "userId", "value": "{{userId}}" },
+            { "key": "productId", "value": "{{productId}}" },
+            { "key": "quantity", "value": "0" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('productId')) {",
+              "  console.warn('productId vacío; ejecuta primero Productos - Listar.');",
+              "  pm.test('SKIP falta productId', ()=> true);",
+              "} else {",
+              "  pm.test('400 esperado', ()=> pm.response.code === 400 || pm.response.code === 422);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02c) Carrito - Ver por usuario (OK)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" }
+        ],
+        "url": "{{baseUrl}}/api/cart/{{userId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [ "pm.test('200 OK', ()=> pm.response.code === 200);" ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03) Tarjetas - Tokenizar (OK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/cards/tokenize",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"number\": \"4111111111111111\",\n  \"cvv\": \"123\",\n  \"expiryDate\": \"2028-12\",\n  \"userId\": {{userId}}\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "let j=null; try{ j=pm.response.json(); }catch(e){}",
+              "pm.test('200/201', ()=> [200,201].includes(pm.response.code));",
+              "pm.test('devuelve token', ()=> j && j.token);",
+              "if (j && j.token) pm.environment.set('cardToken', j.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03b) Tarjetas - Tokenizar CVV inválido (400/422)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/cards/tokenize",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"number\": \"4111111111111111\",\n  \"cvv\": \"12\",\n  \"expiryDate\": \"2028-12\",\n  \"userId\": {{userId}}\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [ "pm.test('400/422 esperado', ()=> [400,422].includes(pm.response.code));" ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04) Orden - Desde carrito (OK/RECHAZO)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders?userId={{userId}}&address={{address}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders" ],
+          "query": [
+            { "key": "userId", "value": "{{userId}}" },
+            { "key": "address", "value": "{{address}}" }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cardToken\": \"{{cardToken}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('cardToken')) {",
+              "  console.warn('cardToken vacío; ejecuta primero Tarjetas - Tokenizar (OK).');",
+              "  pm.test('SKIP falta cardToken', ()=> true);",
+              "} else {",
+              "  let j=null; try{ j=pm.response.json(); }catch(e){}",
+              "  pm.test('200 OK', ()=> pm.response.code === 200);",
+              "  pm.test('tiene id', ()=> j && j.id);",
+              "  if (j && j.id) pm.environment.set('orderId', j.id);",
+              "  pm.environment.set('lastOrderStatus', (j && j.status) ? j.status : '');",
+              "  pm.test('status válido', ()=> ['APPROVED','REJECTED','PENDING','FAILED'].includes(j.status));",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04b) Orden - Desde carrito SIN cardToken (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders?userId={{userId}}&address={{address}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders" ],
+          "query": [
+            { "key": "userId", "value": "{{userId}}" },
+            { "key": "address", "value": "{{address}}" }
+          ]
+        },
+        "body": { "mode": "raw", "raw": "{}" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [ "pm.test('400 esperado', ()=> pm.response.code === 400);" ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04c) Orden - Body con product inexistente (4xx)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders?userId={{userId}}&address={{address}}",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "api", "orders" ],
+          "query": [
+            { "key": "userId", "value": "{{userId}}" },
+            { "key": "address", "value": "{{address}}" }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cardToken\": \"{{cardToken}}\",\n  \"products\": { \"999999\": 1 }\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('cardToken')) {",
+              "  console.warn('cardToken vacío; ejecuta primero Tarjetas - Tokenizar (OK).');",
+              "  pm.test('SKIP falta cardToken', ()=> true);",
+              "} else {",
+              "  pm.test('4xx esperado', ()=> pm.response.code >= 400 && pm.response.code < 500);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04d) Orden - Obtener por id (OK)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-KEY", "value": "{{apiKey}}" }
+        ],
+        "url": "{{baseUrl}}/api/orders/{{orderId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('orderId')) {",
+              "  console.warn('orderId vacío; ejecuta primero una creación de orden.');",
+              "  pm.test('SKIP falta orderId', ()=> true);",
+              "} else {",
+              "  pm.test('200 OK', ()=> pm.response.code === 200);",
+              "  let j=null; try{ j=pm.response.json(); }catch(e){}",
+              "  pm.test('id coincide', ()=> j && `${j.id}` === `${pm.environment.get('orderId')}`);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04e) Orden - Obtener SIN API Key (401)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/orders/{{orderId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [ "pm.test('401 Unauthorized', ()=> pm.response.code === 401);" ]
+          }
+        }
+      ]
+    }
+  ]
+}

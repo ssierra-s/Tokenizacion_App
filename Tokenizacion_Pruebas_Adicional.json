@@ -1,0 +1,777 @@
+{
+	"info": {
+		"_postman_id": "71a1a075-0b6c-45f0-9fb9-8325b111b7bd",
+		"name": "Tokenizacion App - E2E & Endpoint Tests",
+		"description": "Colección para probar endpoints del reto de tokenización: health, seguridad por API Key, usuarios, productos, carrito, tokenización de tarjetas y pedidos/pagos. Incluye tests que encadenan variables entre requests.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47848417"
+	},
+	"item": [
+		{
+			"name": "1) Health & Seguridad",
+			"item": [
+				{
+					"name": "Ping (sin API Key)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 200', ()=> pm.response.code===200);",
+									"pm.test('Cuerpo contiene \"pong\"', ()=> pm.response.text().toLowerCase().includes('pong'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/ping",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"ping"
+							]
+						},
+						"description": "Endpoint de salud. Debe responder 200 con 'pong' sin requerir API Key."
+					},
+					"response": []
+				},
+				{
+					"name": "Productos sin API Key debe 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 401', ()=> pm.response.code===401);",
+									"pm.test('Mensaje de no autorizado', ()=> pm.response.text().toLowerCase().includes('unauthorized') || pm.response.code===401);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						},
+						"description": "Verifica que endpoints protegidos requieran API Key."
+					},
+					"response": []
+				},
+				{
+					"name": "Logs",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "dev-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"logs"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2) Usuarios",
+			"item": [
+				{
+					"name": "Crear usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// --- parseo seguro ---",
+									"const _text = pm.response.text();",
+									"let _json = null;",
+									"try { _json = _text && _text.trim().length ? JSON.parse(_text) : null; } catch(e) { _json = null; }",
+									"",
+									"pm.test('Código 200/201', ()=> [200,201].includes(pm.response.code));",
+									"",
+									"// Intenta obtener el id desde el cuerpo, o desde Location si el body viene vacío",
+									"let userId = _json && (_json.id || _json.userId);",
+									"if (!userId) {",
+									"  const loc = pm.response.headers.get('Location');",
+									"  if (loc) {",
+									"    const parts = loc.split('/').filter(Boolean);",
+									"    userId = parts[parts.length - 1];",
+									"  }",
+									"}",
+									"",
+									"pm.test('Se obtuvo userId (por body o Location)', ()=> !!userId);",
+									"if (userId) pm.environment.set('userId', String(userId));",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Usuario Demo\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"{{phone}}\",\n  \"address\": \"{{address}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Registra un nuevo usuario con correo/telefono únicos."
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener usuarios",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// --- parseo seguro ---",
+									"const _text = pm.response.text();",
+									"let _json = null;",
+									"try { _json = _text && _text.trim().length ? JSON.parse(_text) : null; } catch(e) { _json = null; }",
+									"",
+									"pm.test('Status 200', ()=> pm.response.code===200);",
+									"pm.test('Respuesta JSON', ()=> !!_json);",
+									"",
+									"if (_json) {",
+									"  pm.test('id coincide', ()=> `${_json.id}` === `${pm.environment.get('userId')}`);",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Recupera datos del usuario recién creado."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3) Productos",
+			"item": [
+				{
+					"name": "Buscar productos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status 200', ()=> pm.response.code===200);",
+									"const arr = pm.response.json();",
+									"pm.test('Respuesta es arreglo', ()=> Array.isArray(arr));",
+									"if (arr.length>0) {",
+									"  pm.environment.set('productId', arr[0].id || arr[0].productId);",
+									"  if (arr[0].price) pm.environment.set('productPrice', arr[0].price);",
+									"  console.log('productId=', pm.environment.get('productId'));",
+									"} else {",
+									"  console.warn('No hay productos para el término. Ajusta searchTerm o precarga data.');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/search?name={{searchTerm}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "{{searchTerm}}"
+								}
+							]
+						},
+						"description": "Busca productos. Si encuentra, guarda el primer productId en el ambiente."
+					},
+					"response": []
+				},
+				{
+					"name": "Listar productos (fallback)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 200', ()=> pm.response.code===200);",
+									"const arr = pm.response.json();",
+									"pm.test('Respuesta es arreglo', ()=> Array.isArray(arr));",
+									"if (!pm.environment.get('productId') && arr.length>0) {",
+									"  pm.environment.set('productId', arr[0].id || arr[0].productId);",
+									"  if (arr[0].price) pm.environment.set('productPrice', arr[0].price);",
+									"  console.log('productId(fallback)=', pm.environment.get('productId'));",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						},
+						"description": "Lista productos y si no había productId, toma el primero."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear producto",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "dev-123",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"computador hp\",\n  \"price\": \"2000\",\n  \"stock\":\"10\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/products",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"products"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4) Carrito",
+			"item": [
+				{
+					"name": "Agregar producto al carro",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "dev-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/cart/add?userId=1&productId=1&quantity=2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"cart",
+								"add"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								},
+								{
+									"key": "productId",
+									"value": "1"
+								},
+								{
+									"key": "quantity",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ver productos del carrito",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "dev-123",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/cart/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"cart",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5) Tarjetas / Tokenización",
+			"item": [
+				{
+					"name": "Tokenizar tarjeta",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('HTTP 200/201/4xx aceptable por probabilidad', ()=> [200,201,400,402,409,422].includes(pm.response.code));",
+									"let json; try { json = pm.response.json(); } catch(e) { json=null; }",
+									"if ([200,201].includes(pm.response.code)) {",
+									"  pm.test('Devuelve token', ()=> json && json.token);",
+									"  pm.environment.set('cardToken', json.token);",
+									"  if (json.maskedNumber) pm.environment.set('maskedNumber', json.maskedNumber);",
+									"} else {",
+									"  pm.test('Error controlado (rechazo probable)', ()=> !!json && (json.error || json.message));",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"number\": \"4111111111111111\",\n  \"cvv\": \"123\",\n  \"expiryDate\": \"12/28\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cards/tokenize?userId=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"cards",
+								"tokenize"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Genera token de tarjeta. Puede ser rechazado según probabilidad; el test contempla ambos casos."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "6) Pedidos & Pagos",
+			"item": [
+				{
+					"name": "Consultar pedido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 200', ()=> pm.response.code===200);",
+									"const json = pm.response.json();",
+									"pm.test('id coincide', ()=> `${json.id || json.orderId}` === `${pm.environment.get('orderId')}`);",
+									"pm.test('Status conocido si existe', ()=> !json.status || ['APPROVED','REJECTED','PENDING','FAILED'].includes(json.status));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/{{orderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{orderId}}"
+							]
+						},
+						"description": "Recupera el pedido y valida campos básicos."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear Pedido",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "dev-123",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"cardToken\": \"765bced7-6db1-4928-afb6-3928116a7163\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders?userId=1&address=Bogota",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								},
+								{
+									"key": "address",
+									"value": "Bogota"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "7) Negativos & Validaciones",
+			"item": [
+				{
+					"name": "Tokenizar sin API Key -> 401",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 401', ()=> pm.response.code===401);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"number\": \"4111111111111111\",\n  \"cvv\": \"123\",\n  \"expiryDate\": \"2028-12\",\n  \"userId\": \"{{userId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cards/tokenize",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"cards",
+								"tokenize"
+							]
+						},
+						"description": "Asegura que el endpoint de tokenización no sea público."
+					},
+					"response": []
+				},
+				{
+					"name": "Crear usuario con email duplicado -> 4xx",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Código 4xx por duplicado', ()=> pm.response.code>=400 && pm.response.code<500);",
+									"let json; try { json = pm.response.json(); } catch(e) { json=null; }",
+									"pm.test('Mensaje de error', ()=> json && (json.error || json.message));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Usuario Demo Dup\",\n  \"email\": \"{{email}}\",\n  \"phone\": \"{{phone}}\",\n  \"address\": \"{{address}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Reintenta crear el mismo usuario y espera error por unicidad de email/phone."
+					},
+					"response": []
+				},
+				{
+					"name": "Tokenizar con tarjeta inválida -> 400/422",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Debe responder 400/422', ()=> [400,422].includes(pm.response.code));",
+									"let json; try { json = pm.response.json(); } catch(e) { json=null; }",
+									"pm.test('Mensaje de validación', ()=> json && (json.error || json.message));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"number\": \"411111111111\",\n  \"cvv\": \"12\",\n  \"expiryDate\": \"20-01\",\n  \"userId\": \"{{userId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cards/tokenize",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"cards",
+								"tokenize"
+							]
+						},
+						"description": "Prueba validaciones de formato de tarjeta/cvv/fecha."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (!pm.environment.get('runId')) { pm.environment.set('runId', Date.now().toString()); }",
+					"if (!pm.environment.get('randomInt')) { pm.environment.set('randomInt', Math.floor(100000 + Math.random()*900000)); }",
+					"if (!pm.environment.get('email')) { pm.environment.set('email', `candidate_${pm.environment.get('runId')}_${pm.environment.get('randomInt')}@mail.test`); }",
+					"if (!pm.environment.get('phone')) { pm.environment.set('phone', `+5076${pm.environment.get('randomInt')}`); }",
+					"if (!pm.environment.get('address')) { pm.environment.set('address', 'Calle Falsa 123, Panama City'); }",
+					"if (!pm.environment.get('searchTerm')) { pm.environment.set('searchTerm', 'paracetamol'); }"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "apiKey",
+			"value": "dev-123"
+		}
+	]
+}
