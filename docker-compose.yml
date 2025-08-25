@@ -17,17 +17,17 @@ services:
     depends_on: [db, mailhog]
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: db
+      DB_HOST: bhih7z60lyvwuavefq9w-postgresql.services.clever-cloud.com
       DB_PORT: 5432
-      DB_NAME: tokenizaciondb
-      DB_USER: postgres
-      DB_PASSWORD: postgres
+      DB_NAME: bhih7z60lyvwuavefq9w
+      DB_USER: uuomcbsoroyedzgttbrw
+      DB_PASSWORD: w0OXmyPNMs1E2pFH7QLvVGBNeAsR4P
       MAIL_HOST: mailhog
       MAIL_PORT: 1025
       MAIL_ENABLED: "true"
-      MAIL_FROM: noreply@local.test
+      MAIL_FROM: sergioge28@gmail.com
       API_KEY: dev-123
-      AES_GCM_KEY_BASE64: REEMPLAZA_CON_BASE64_32B
+      AES_GCM_KEY_BASE64: ymI5Oo2g2bXWS4FFW/okZI1bXTtvxSVQGXQVx9VhK+I=
       PAYMENT_REJECTION_PROB: "0.3"
       PAYMENT_MAX_ATTEMPTS: "3"
     ports: ["8080:8080"]
