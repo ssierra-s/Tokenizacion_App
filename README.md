@@ -298,6 +298,53 @@ Conflictos de stock bajo/concurrencia
 → Espera 409 por bloqueo optimista; vuelve a intentar o maneja en cliente.
 
 6) IA
+________________________________________
+Durante el desarrollo del proyecto Tokenización App, se utilizó el modelo de lenguaje GPT-5 de OpenAI como asistente de ingeniería de software. El objetivo principal fue agilizar la construcción, documentación y despliegue de la API, garantizando buenas prácticas de desarrollo en Spring Boot, contenedorización con Docker y despliegue en plataformas en la nube como Rende.
 
-  Se uso la el modelo de IA de ChatGPT5, con un promt inicial: Te voy a pasar un documento con un reto tecnico y adicionalmente te voy a pasar el progreso que llevo, necesito que revises si todo esta correcto y estoy cumpliendo con los requerimientos que se piden
+Promt inicial: Te voy a pasar un documento con un reto tecnico y adicionalmente te voy a pasar el progreso que llevo, necesito que revises si todo esta correcto y estoy cumpliendo con los requerimientos que se piden
   Dicho chat se encuentra en esta URL: https://chatgpt.com/share/68ab4527-5a68-8001-bc2d-c49a3103e0f6
+________________________________________
+2. Áreas de apoyo de GPT-5
+2.1 Diseño de arquitectura
+•	Se consultaron patrones de arquitectura para aplicaciones REST, optando por una arquitectura hexagonal ligera.
+•	Recomendación de capas: Controller – Service – Domain – Infraestructura.
+•	Definición de estándares de validación, manejo de errores y DTOs.
+2.2 Configuración del proyecto
+•	Generación de ejemplos de configuración para application.properties y uso de variables de entorno.
+•	Buenas prácticas en Spring Profiles (dev / prod).
+•	Asesoría para el manejo de HikariCP y optimización de pool de conexiones.
+2.3 Persistencia y base de datos
+•	Generación de entidades con anotaciones JPA/Hibernate.
+•	Uso de identificadores UUID/Long según requerimientos.
+•	Configuración de PostgreSQL y fallback a H2 en desarrollo.
+•	Explicación de errores comunes: Invalid port number ${DB_PORT}, Connection refused.
+2.4 Contenedorización y despliegue
+•	Creación de un Dockerfile optimizado para Java 21 con Spring Boot.
+•	Configuración de docker-compose.yml (API + PostgreSQL con healthcheck).
+•	Instrucciones para despliegue en Render, Railway, Fly.io y GCP Cloud Run.
+•	Recomendación de usar DBaaS gestionadas en lugar de contenedores de DB en producción.
+2.5 Pruebas y aseguramiento de calidad
+•	Generación de colecciones Postman para pruebas funcionales y de error.
+•	Instrucciones para ejecutar pruebas automáticas con Newman.
+•	Sugerencias para pruebas unitarias e integración con JUnit 5, Mockito y Testcontainers.
+•	Definición de umbral de cobertura: ≥ 80% en servicios y validadores.
+________________________________________
+3. Beneficios obtenidos con GPT-5
+•	Agilidad: Reducción significativa del tiempo de documentación y configuración.
+•	Buenas prácticas: Recomendaciones sobre seguridad (HTTPS, CORS, JWT), validaciones y separación de responsabilidades.
+•	Despliegue rápido: Generación de scripts listos para usar en Docker y Render.
+•	Pruebas más sólidas: Creación de suites de Postman y estrategias de pruebas automáticas.
+________________________________________
+4. Limitaciones y validaciones necesarias
+Aunque GPT-5 resultó de gran ayuda, fue necesario:
+•	Validar manualmente configuraciones sensibles (ej. variables de entorno, credenciales, puertos).
+•	Ajustar los ejemplos de código a la realidad del entorno local y productivo.
+•	Probar en entornos reales los despliegues (Render/GCP) para asegurar compatibilidad.
+________________________________________
+5. Conclusión
+El uso de GPT-5 en el proyecto Tokenización App permitió:
+•	Acelerar el desarrollo técnico.
+•	Documentar de forma clara y estructurada.
+•	Implementar un pipeline de calidad con pruebas, Docker y despliegue en la nube.
+En conclusión, GPT-5 fue utilizado como un asistente de ingeniería que complementó el conocimiento del desarrollador, facilitando la entrega de un proyecto más robusto, documentado y listo para producción
+
