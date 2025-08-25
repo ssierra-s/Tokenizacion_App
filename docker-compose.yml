@@ -17,11 +17,11 @@ services:
     depends_on: [db, mailhog]
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: bhih7z60lyvwuavefq9w-postgresql.services.clever-cloud.com
+      DB_HOST: dpg-d2m6lcp5pdvs73bef710-a.oregon-postgres.render.com
       DB_PORT: 5432
-      DB_NAME: bhih7z60lyvwuavefq9w
-      DB_USER: uuomcbsoroyedzgttbrw
-      DB_PASSWORD: w0OXmyPNMs1E2pFH7QLvVGBNeAsR4P
+      DB_NAME: postgres_token
+      DB_USER: postgres_token_user
+      DB_PASSWORD: NNOfTfIfBsOYJiHhFWfKB9HqjT48vWiM
       MAIL_HOST: mailhog
       MAIL_PORT: 1025
       MAIL_ENABLED: "true"
