@@ -1,6 +1,31 @@
-### Tokenización App (Spring Boot 3 / Java 21)
+#### Tokenización App (Spring Boot 3 / Java 21) ###
 
-API REST que tokeniza tarjetas (AES-GCM), maneja carrito y órdenes con reintentos de pago, y envía emails de aprobación/rechazo post-commit. Seguridad por API Key y manejo uniforme de errores (RFC-7807).
+Este proyecto implementa una API REST de tokenización de tarjetas con AES-GCM, gestión de carritos y órdenes con reintentos de pago, además de envío de correos electrónicos de confirmación/rechazo tras el commit en base de datos.  
+
+La aplicación está pensada para ser flexible en su despliegue y pruebas. Existen varias formas de correrla:
+
+- **Modo dev (local con H2 en memoria):**  
+  Descargando el repositorio y ejecutando la aplicación con Maven, se utiliza la base de datos en memoria H2, ideal para desarrollo rápido y pruebas locales.  
+  Este modo también soporta opcionalmente MailHog para visualizar los correos enviados.
+
+- **Modo prod (local con PostgreSQL real):**  
+  Configurando la aplicación con el perfil `prod`, la persistencia se realiza sobre PostgreSQL y se aplican migraciones con Flyway.  
+  Este es el modo pensado para entornos de producción.
+
+- **Imagen Docker (por defecto en prod):**  
+  El repositorio incluye un `Dockerfile` multistage que genera una imagen lista para ejecutar la aplicación en modo producción.  
+  Con este enfoque no es necesario instalar dependencias localmente; basta con construir y correr el contenedor.
+
+- **Servicio ya desplegado en Render:**  
+  Para mayor comodidad, la aplicación ya se encuentra desplegada en la nube en la siguiente URL:  
+  👉 https://tokenizacion.onrender.com  
+
+  Esto permite que no sea necesario levantar nada en local si solo se quieren probar los endpoints.  
+  Los archivos `.json` incluidos en el repositorio contienen la colección de **Postman**, con los requests y tests automatizados.  
+  Para usarlos contra la API en Render, solo debes cambiar la variable `baseUrl` a la dirección anterior, y podrás probar inmediatamente todas las operaciones (ping, productos, carrito, tokenización de tarjetas y órdenes).  
+  Ten en cuenta que el entorno desplegado en Render corre bajo el perfil de producción, por lo que está utilizando PostgreSQL y configuración real de persistencia.
+
+---
 
 1) Instrucciones para ejecutar localmente
 
@@ -181,7 +206,7 @@ Si tienes pruebas que requieren correo pero no hay SMTP, pon MAIL_ENABLED=false 
 Importa el archivo de colección (.postman_collection.json) en Postman.
 
 Configura un Environment con variables:
-- baseUrl = http://localhost:8080
+- baseUrl = http://localhost:8080   (o https://tokenizacion.onrender.com para el servicio ya desplegado)
 - apiKey = dev-123
 - userId = 1 (o el que uses)
 
@@ -192,6 +217,7 @@ Orden recomendado de ejecución:
 4. Tarjetas - Tokenizar (guarda cardToken)
 5. Orden - Desde carrito o Orden - con products
 6. Orden - Obtener por id
+7. Logs
 
 La colección incluye tests negativos:
 - Sin/Inválida API Key → 401
