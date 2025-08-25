@@ -243,3 +243,8 @@ Email “Connection refused”
 
 Conflictos de stock bajo/concurrencia
 → Espera 409 por bloqueo optimista; vuelve a intentar o maneja en cliente.
+
+6) IA
+
+  Se uso la el modelo de IA de ChatGPT5, con un promt inicial: Te voy a pasar un documento con un reto tecnico y adicionalmente te voy a pasar el progreso que llevo, necesito que revises si todo esta correcto y estoy cumpliendo con los requerimientos que se piden
+  Dicho chat se encuentra en esta URL: https://chatgpt.com/share/68ab4527-5a68-8001-bc2d-c49a3103e0f6
